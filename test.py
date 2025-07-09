@@ -1,189 +1,97 @@
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-from streamlit_option_menu import option_menu
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-import time
-import urllib.parse
 
-# Sayfa ayarları
-st.set_page_config(page_title="TTech Data App", layout="wide")
+# Sayfa yapılandırması
+st.set_page_config(page_title="NeoBank Reporting System", page_icon="📊", layout="centered")
 
-# Özel stil ve fontlar
-def add_custom_style():
-    st.markdown("""
-        <style>
-            .main {
-                background-color: #f8f9fc;
-                font-family: 'Poppins', sans-serif;
-            }
-            section[data-testid="stSidebar"] {
-                background-color: #e9eff6;
-                padding: 20px;
-            }
-            h1, h2, h3, h4 {
-                font-family: 'Poppins', sans-serif;
-                color: #1f77b4;
-            }
-            .stButton > button {
-                background-color: #1f77b4;
-                color: white;
-                border-radius: 8px;
-                padding: 0.5rem 1rem;
-            }
-            .stButton > button:hover {
-                background-color: #135d91;
-            }
-        </style>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+# 🎨 Renk Paleti
+PRIMARY_COLOR = "#FF6F00"      # NeOBank ana turuncusu
+GRADIENT_START = "#FFCC80"     # Açık turuncu
+GRADIENT_END = "#FF6F00"       # Koyu turuncu
+TEXT_COLOR = "#333333"
+
+# CSS stil kodu
+st.markdown(f"""
+    <style>
+    body {{
+        background: linear-gradient(to right, {GRADIENT_START}, {GRADIENT_END});
+    }}
+    .header {{
+        background-color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }}
+    .header img {{
+        height: 40px;
+        margin-right: 15px;
+    }}
+    .header h1 {{
+        font-size: 24px;
+        color: {TEXT_COLOR};
+        margin: 0;
+    }}
+    .login-box {{
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        color: {TEXT_COLOR};
+        max-width: 420px;
+        margin: auto;
+        font-family: 'Segoe UI', sans-serif;
+    }}
+    .title {{
+        text-align: center;
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        color: {PRIMARY_COLOR};
+    }}
+    .stTextInput > div > div > input {{
+        background-color: #fff8f0;
+        color: #000;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }}
+    .footer {{
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }}
+    .footer a {{
+        color: {PRIMARY_COLOR};
+        text-decoration: none;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# --- HEADER alanı ---
+with st.container():
+    st.markdown(f"""
+        <div class="header">
+            <img src="https://cdn-icons-png.flaticon.com/512/3178/3178283.png" alt="report icon" />
+            <h1>Reportin System</h1>
+        </div>
     """, unsafe_allow_html=True)
 
-add_custom_style()
+# --- Giriş Kutusu ---
+with st.container():
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<div class="title">🧑‍💼 NeOBank | Çalışan Girişi</div>', unsafe_allow_html=True)
 
-# Sidebar menu
-with st.sidebar:
-    main_selection = option_menu(
-        menu_title="TTech Panel",
-        options=["Ana Sayfa", "Veri Kazıma", "Veri Görselleştirme", "Veri Tahminleme"],
-        icons=["house", "cloud-download", "bar-chart", "activity"],
-        menu_icon="cast",
-        default_index=0,
-        styles={
-            "container": {"padding": "5!important", "background-color": "#f0f2f6"},
-            "icon": {"color": "#1f77b4", "font-size": "20px"},
-            "nav-link": {"font-size": "18px"},
-            "nav-link-selected": {"background-color": "#1f77b4", "color": "white"},
-        }
-    )
+    username = st.text_input("Kullanıcı Adı")
+    password = st.text_input("Şifre", type="password")
 
-    if main_selection == "Veri Kazıma":
-        sub_selection = option_menu(
-            menu_title="Alt Menü",
-            options=["Fiyat Kazıma", "Web Sitesi Ürün Kazıma", "Veri Kazıma"],
-            icons=["tag", "globe", "cloud-upload"],
-            menu_icon="none",
-            default_index=0,
-            styles={
-                "container": {"padding": "0", "background-color": "#f0f2f6"},
-                "icon": {"color": "#1f77b4", "font-size": "18px"},
-                "nav-link": {"font-size": "16px", "margin":"0px"},
-                "nav-link-selected": {"background-color": "#1f77b4", "color": "white"},
-            }
-        )
-    else:
-        sub_selection = None
-
-if main_selection == "Ana Sayfa":
-    st.title("🏠 TTech Veri Platformuna Hoşgeldiniz")
-    st.markdown("""
-    Sol menüden bir işlem seçin.
-    """)
-
-elif main_selection == "Veri Kazıma" and sub_selection == "Fiyat Kazıma":
-    st.title("📥 Fiyat Kazıma")
-    urun = st.text_input("🔎 Aramak istediğiniz ürünü yazın", placeholder="Örn: saat")
-
-    if st.button("🔍 Ara"):
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("user-agent=Mozilla/5.0")
-
-        driver = webdriver.Chrome(options=options)
-
-        def scroll_page(driver):
-            last_height = driver.execute_script("return document.body.scrollHeight")
-            while True:
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(2)
-                new_height = driver.execute_script("return document.body.scrollHeight")
-                if new_height == last_height:
-                    break
-                last_height = new_height
-
-        tum_veriler = []
-        query = urllib.parse.quote_plus(urun)
-        base_url = f"https://www.akakce.com/arama/?q={query}"
-
-        for sayfa_no in range(1, 4):
-            sayfa_url = f"{base_url}&p={sayfa_no}"
-            driver.get(sayfa_url)
-            time.sleep(3)
-            scroll_page(driver)
-
-            kartlar = driver.find_elements(By.CSS_SELECTOR, "li.w")
-            if not kartlar:
-                break
-
-            for kart in kartlar:
-                try:
-                    urun_adi = kart.find_element(By.CSS_SELECTOR, "a.pw_v8").get_attribute("title")
-                except:
-                    urun_adi = "Ürün adı yok"
-
-                marka = kart.get_attribute("data-mk") or "Marka yok"
-
-                try:
-                    teklif_bloklari = kart.find_elements(By.CSS_SELECTOR, "div.p_w_v9")
-                    for teklif_blok in teklif_bloklari:
-                        satirlar = teklif_blok.find_elements(By.CSS_SELECTOR, "a.iC")
-
-                        for satir in satirlar:
-                            try:
-                                fiyat_span = satir.find_element(By.CSS_SELECTOR, "span.pt_v8")
-                                fiyat = fiyat_span.text.strip()
-                            except:
-                                fiyat = "Fiyat yok"
-
-                            try:
-                                img_tag = satir.find_element(By.TAG_NAME, "img")
-                                satici_adi = img_tag.get_attribute("alt") or "Satıcı bilgisi yok"
-                                logo_url = img_tag.get_attribute("src") or ""
-                            except:
-                                satici_adi = "Satıcı bilgisi yok"
-                                logo_url = ""
-
-                            tum_veriler.append({
-                                "Ürün": urun_adi,
-                                "Fiyat": fiyat,
-                                "Satıcı": satici_adi,
-                                "Marka": marka,
-                                "Satıcı Logo": logo_url
-                            })
-                except:
-                    continue
-
-        driver.quit()
-
-        if tum_veriler:
-            df = pd.DataFrame(tum_veriler)
-            st.success(f"{len(df)} ürün bulundu!")
-
-            grouped = df.groupby(["Ürün", "Marka"])
-            for (urun_adi, marka), group in grouped:
-                st.subheader(f"📦 {urun_adi} ({marka})")
-                st.markdown(
-                    group[["Fiyat", "Satıcı", "Satıcı Logo"]].to_html(
-                        escape=False,
-                        formatters={"Satıcı Logo": lambda x: f'<img src="{x}" width="60">'},
-                        index=False
-                    ),
-                    unsafe_allow_html=True
-                )
-
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 CSV İndir", csv, f"{urun}_akakce.csv")
-
+    if st.button("Giriş Yap", type="primary"):
+        if username == "employee" and password == "neobank123":
+            st.success("✅ Giriş başarılı! Raporlara yönlendiriliyorsunuz...")
         else:
-            st.warning("Hiç sonuç bulunamadı.")
+            st.error("❌ Hatalı kullanıcı adı veya şifre.")
 
-elif main_selection == "Veri Görselleştirme":
-    st.title("📊 Veri Görselleştirme")
-    st.info("Bu alan yakında aktif olacak.")
-
-elif main_selection == "Veri Tahminleme":
-    st.title("📈 Veri Tahminleme")
-    st.info("Bu alan yakında aktif olacak.")
+    st.markdown('<p class="footer"><a href="#">Şifremi Unuttum?</a></p>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
