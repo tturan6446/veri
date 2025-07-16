@@ -55,6 +55,16 @@ body {
 .stButton>button:hover {
     background-color: #01579b;
 }
+.centered-image {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+.centered-image img {
+    max-width: 80%;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -84,28 +94,53 @@ else:
     with st.sidebar:
         selected = option_menu(
             menu_title="Menü",
-            options=["Segment Analizi", "Limit Tahminleme", "Zaman Serisi", "Dark Web Riski", "Model Kıyaslama"],
-            icons=["pie-chart", "activity", "clock-history", "shield-exclamation", "bar-chart"],
+            options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri", "Dark Web Risk Paneli"],
+            icons=["house", "pie-chart", "activity", "bar-chart-line", "shield-exclamation"],
             menu_icon="grid",
             default_index=0
         )
 
-    if selected == "Segment Analizi":
-        st.subheader("📊 Müşteri Segmentasyonu")
-        st.write("Segment bazlı özellikleri ve profil analizlerini burada sunabilirsiniz.")
+    if selected == "Ana Sayfa":
+        st.subheader("📊 Ana Sayfa")
+        st.markdown("""
+        - Genel istatistik özetleri (toplam müşteri, ortalama kredi limiti vb.)
+        - Hızlı grafik: Segment dağılımı, kart tipi dağılımı
+        - Kısa özet: Uygulamanın amacı ve yetenekleri
+        """)
+        st.markdown("""
+        <div class="centered-image">
+            <img src="https://images.ctfassets.net/3viuren4us1n/5DhTy3R6WNBbDZYMDQNCuo/ebc5e9d6e4a67ef9c7bb1f5cee176a6e/digital-transformation-banking-pioneer.jpg" alt="banking dashboard" />
+        </div>
+        """, unsafe_allow_html=True)
 
-    elif selected == "Limit Tahminleme":
-        st.subheader("📊 Kredi Limiti Tahminleme")
-        st.write("Model inputlarını alarak kullanıcı bazlı kredi limiti tahminleri yapabilirsiniz.")
+    elif selected == "Müşteri Segmentasyonu":
+        st.subheader("🧩 Müşteri Segmentasyonu")
+        st.markdown("""
+        - K-Means ile segment ayrımı (PCA ile görselleştirme)
+        - Her segmentin profil özeti (ortalama gelir, borç, skor)
+        - Kart türü ve harcama davranışına göre analiz
+        """)
 
-    elif selected == "Zaman Serisi":
-        st.subheader("⏰ Harcama Zaman Serileri")
-        st.write("Aylık veya yıllık harcama davranışlarını analiz edin.")
+    elif selected == "Limit Tahminleme Aracı":
+        st.subheader("📈 Limit Tahminleme Aracı")
+        st.markdown("""
+        - Kullanıcıdan giriş al (gelir, borç, skor vb.)
+        - Eğitimli modelle kredi limiti tahmini
+        - Sonuç + model doğruluk metrikleri (MAPE, RMSE)
+        """)
 
-    elif selected == "Dark Web Riski":
-        st.subheader("⚠️ Dark Web Riski")
-        st.write("Dark web'de yer alan kartlar ve bu kartlara ait müşteri profillerini listeleyin.")
+    elif selected == "EDA Analizleri":
+        st.subheader("📊 EDA (Keşifsel Veri Analizi)")
+        st.markdown("""
+        - Kategorik/sayısal değişken dağılımları
+        - Korelasyon matrisi, boxplotlar, outlier analizi
+        - Zaman serisi harcama analizi
+        """)
 
-    elif selected == "Model Kıyaslama":
-        st.subheader("📈 Model Performans Karşılaştırması")
-        st.write("Regresyon modellerinin hata metriklerini ve başarılarını kıyaslayabilirsiniz.")
+    elif selected == "Dark Web Risk Paneli":
+        st.subheader("⚠️ Dark Web Risk Paneli")
+        st.markdown("""
+        - Dark web'de görülen kartların kullanıcı profili
+        - Riskli kullanıcılar listesi ve skor bazlı sıralama
+        - Segmentlere göre risk analizi
+        """)
