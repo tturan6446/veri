@@ -1,3 +1,4 @@
+
 # --- Streamlit Müşteri Segmentasyonu ve Limit Tahminleme Platformu ---
 
 import streamlit as st
@@ -35,7 +36,6 @@ def load_and_clean_merged_csv():
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
     df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
-    st.success(f"✅ Toplam temizlenmiş veri satırı: {len(df)}")
     return df
 
 # --- EDA Yardımcı Fonksiyonu ---
@@ -60,6 +60,29 @@ def create_eda_dashboard_preview(df):
         "aylik_harcama_df": aylik_harcama,
         "kart_limiti_df": kart_limiti,
         "borc_cinsiyet_df": borc_cinsiyet
+    }
+
+# --- Gelişmiş KPI ve Alt Grafikler ---
+def generate_advanced_kpi_and_charts(df):
+    df['txn_month'] = df['txn_date'].dt.to_period("M").dt.to_timestamp()
+    current_month = df['txn_month'].max()
+    previous_month = current_month - pd.DateOffset(months=1)
+
+    current_avg_limit = df[df['txn_month'] == current_month]['credit_limit'].mean()
+    previous_avg_limit = df[df['txn_month'] == previous_month]['credit_limit'].mean()
+
+    if pd.notna(previous_avg_limit) and previous_avg_limit != 0:
+        mtd_change_pct = ((current_avg_limit - previous_avg_limit) / previous_avg_limit) * 100
+    else:
+        mtd_change_pct = 0.0
+
+    card_spending = df.groupby('card_brand')['amount'].sum().reset_index()
+    gender_limit = df.groupby('gender')['credit_limit'].mean().reset_index()
+
+    return {
+        "mtd_change_pct": round(mtd_change_pct, 2),
+        "card_spending_df": card_spending,
+        "gender_limit_df": gender_limit
     }
 
 # --- SESSION KONTROLLERİ ---
@@ -159,30 +182,41 @@ else:
         st.subheader("📊 EDA (Power BI Dashboard Görünümü)")
 
         eda = create_eda_dashboard_preview(df)
+        advanced = generate_advanced_kpi_and_charts(df)
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Toplam Müşteri", f"{eda['toplam_musteri']:,}")
         col2.metric("Ortalama Kredi Limiti", f"{eda['ort_kredi_limiti']:,.0f} ₺")
         col3.metric("Ortalama Gelir", f"{eda['ort_gelir']:,.0f} ₺")
         col4.metric("Ortalama Borç", f"{eda['ort_borc']:,.0f} ₺")
+        col5.metric("MTD Limit Artışı", f"{advanced['mtd_change_pct']}%", delta=f"{advanced['mtd_change_pct']}%")
 
         st.markdown("### 📈 Aylık Harcama Trendleri")
         fig1 = px.line(eda['aylik_harcama_df'], x="txn_month", y="amount", title="Aylık Toplam Harcama")
         st.plotly_chart(fig1, use_container_width=True)
 
-        col5, col6 = st.columns(2)
-
-        with col5:
+        col6, col7 = st.columns(2)
+        with col6:
             st.markdown("### 💳 Kart Markalarına Göre Kredi Limiti")
             fig2 = px.bar(eda['kart_limiti_df'], x="card_brand", y="credit_limit", color="card_brand",
                           title="Kart Tipine Göre Ortalama Limit")
             st.plotly_chart(fig2, use_container_width=True)
 
-        with col6:
+        with col7:
             st.markdown("### 👥 Cinsiyete Göre Ortalama Borç")
             fig3 = px.bar(eda['borc_cinsiyet_df'], x="gender", y="total_debt", color="gender",
                           title="Cinsiyete Göre Ortalama Borç")
             st.plotly_chart(fig3, use_container_width=True)
+
+        st.markdown("### 💸 Kart Tipine Göre Harcama")
+        fig4 = px.bar(advanced['card_spending_df'], x="card_brand", y="amount", color="card_brand",
+                      title="Kart Tipine Göre Toplam Harcama")
+        st.plotly_chart(fig4, use_container_width=True)
+
+        st.markdown("### 👤 Cinsiyete Göre Ortalama Kredi Limiti")
+        fig5 = px.bar(advanced['gender_limit_df'], x="gender", y="credit_limit", color="gender",
+                      title="Cinsiyete Göre Ortalama Kredi Limiti")
+        st.plotly_chart(fig5, use_container_width=True)
 
     elif selected == "Dark Web Risk Paneli":
         st.subheader("⚠️ Dark Web Risk Paneli")
