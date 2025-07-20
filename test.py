@@ -66,7 +66,7 @@ df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount',
               how='left')
 
 
- return df
+     return df
 
 # --- EDA Yardımcı Fonksiyonu ---
 def create_eda_dashboard_preview(df):
