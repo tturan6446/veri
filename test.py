@@ -36,6 +36,34 @@ def load_and_clean_merged_csv():
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
     df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
+    
+# --- 3. SEGMENTASYON (K-MEANS) ---
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+features = df[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
+features = features.dropna()
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(features)
+
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+features['segment'] = kmeans.fit_predict(X_scaled)
+
+segment_map = {
+    0: "Riskli & Düşük Gelirli",
+    1: "Premium Müşteri",
+    2: "Gelişmekte Olan Müşteri",
+    3: "Borç Yükü Altında"
+}
+features['segment_label'] = features['segment'].map(segment_map)
+
+# Segment label'ı ana df ile birleştir
+df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
+              on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
+              how='left')
+
+
     return df
 
 # --- EDA Yardımcı Fonksiyonu ---
@@ -170,9 +198,50 @@ else:
         st.subheader("📊 Ana Sayfa")
         st.markdown("Uygulama açıklaması ve genel özet bilgiler gelecektir.")
 
+    
     elif selected == "Müşteri Segmentasyonu":
         st.subheader("🧩 Müşteri Segmentasyonu")
-        st.dataframe(df.head())
+
+        st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
+
+        segment_visuals = {
+            "Riskli & Düşük Gelirli": "https://drive.google.com/uc?id=1kT3tKIpV6TTytr8YoVCOwYJYZM1zKwbW",
+            "Premium Müşteri": "https://drive.google.com/uc?id=1N76PFu8QsUlVnB2DRCnScmAjupIn6_au",
+            "Gelişmekte Olan Müşteri": "https://drive.google.com/uc?id=1E7NMfP90ufwWq9XCZyN0NZYaf5rTnzQK",
+            "Borç Yükü Altında": "https://drive.google.com/uc?id=1OFDvE-IGYb3hzSbuqK7Ud9TUFYWuSRk7"
+        }
+
+        segment_descriptions = {
+            "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
+            "Premium Müşteri": "Geliri ve skoru yüksek, sadık müşteri.",
+            "Gelişmekte Olan Müşteri": "Potansiyel var, gelişmeye açık.",
+            "Borç Yükü Altında": "Harcama yüksek, borç oranı yüksek."
+        }
+
+        sorted_segments = [
+            "Riskli & Düşük Gelirli",
+            "Premium Müşteri",
+            "Gelişmekte Olan Müşteri",
+            "Borç Yükü Altında"
+        ]
+
+        for row in range(2):
+            cols = st.columns(2)
+            for col_index in range(2):
+                i = row * 2 + col_index
+                if i < len(sorted_segments):
+                    segment = sorted_segments[i]
+                    with cols[col_index]:
+                        st.markdown(f"#### <div style='text-align:center; font-size:20px; font-weight:bold'>{segment}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='text-align:center'><img src='{segment_visuals[segment]}' width='160'></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='text-align:center; color:grey'>{segment_descriptions[segment]}</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        seg_counts = df['segment_label'].value_counts().reset_index()
+        seg_counts.columns = ['Segment', 'Müşteri Sayısı']
+        fig = px.bar(seg_counts, x='Segment', y='Müşteri Sayısı', color='Segment', title="Segment Dağılımı")
+        st.plotly_chart(fig, use_container_width=True)
 
     elif selected == "Limit Tahminleme Aracı":
         st.subheader("📈 Limit Tahminleme Aracı")
