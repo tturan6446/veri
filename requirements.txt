@@ -1,6 +1,10 @@
-streamlit
 pandas
-selenium
+numpy
 matplotlib
+seaborn
+scikit-learn
+streamlit
 streamlit-option-menu
 seaborn
+requests
+duckdb
