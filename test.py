@@ -64,31 +64,30 @@ df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount',
               how='left')
 
 
-# HATALI RETURN DIŞINDA: return df
-
-# --- EDA Yardımcı Fonksiyonu ---
-def create_eda_dashboard_preview(df):
+def hesaplamalari_yap():
+def hesaplamalari_yap():
+    return {
+    # --- EDA Yardımcı Fonksiyonu ---
+    def create_eda_dashboard_preview(df):
     df_sample = df.copy()
-
-    toplam_musteri = df_sample['card_brand'].count()
+        toplam_musteri = df_sample['card_brand'].count()
     ort_kredi_limiti = df_sample['credit_limit'].mean()
     ort_gelir = df_sample['yearly_income'].mean()
     ort_borc = df_sample['total_debt'].mean()
-
-    df_sample['txn_month'] = df_sample['txn_date'].dt.to_period("M").dt.to_timestamp()
+        df_sample['txn_month'] = df_sample['txn_date'].dt.to_period("M").dt.to_timestamp()
     aylik_harcama = df_sample.groupby('txn_month')['amount'].sum().reset_index()
     kart_limiti = df_sample.groupby('card_brand')['credit_limit'].mean().reset_index()
     borc_cinsiyet = df_sample.groupby('gender')['total_debt'].mean().reset_index()
-
-# HATALI RETURN DIŞINDA:     return {
         "toplam_musteri": toplam_musteri,
-        "ort_kredi_limiti": ort_kredi_limiti,
-        "ort_gelir": ort_gelir,
-        "ort_borc": ort_borc,
-        "aylik_harcama_df": aylik_harcama,
-        "kart_limiti_df": kart_limiti,
-        "borc_cinsiyet_df": borc_cinsiyet
+    "ort_kredi_limiti": ort_kredi_limiti,
+    "ort_gelir": ort_gelir,
+    "ort_borc": ort_borc,
+    "aylik_harcama_df": aylik_harcama,
+    "kart_limiti_df": kart_limiti,
+    "borc_cinsiyet_df": borc_cinsiyet
     }
+    }
+
 
 # --- Gelişmiş KPI ve Alt Grafikler ---
 def generate_advanced_kpi_and_charts(df):
@@ -107,11 +106,13 @@ def generate_advanced_kpi_and_charts(df):
     card_spending = df.groupby('card_brand')['amount'].sum().reset_index()
     gender_limit = df.groupby('gender')['credit_limit'].mean().reset_index()
 
-# HATALI RETURN DIŞINDA:     return {
-        "mtd_change_pct": round(mtd_change_pct, 2),
-        "card_spending_df": card_spending,
-        "gender_limit_df": gender_limit
+def hesaplamalari_yap():
+    return {
+    "card_spending_df": card_spending,
+    "gender_limit_df": gender_limit
     }
+    }
+
 
 # --- SESSION KONTROLLERİ ---
 if 'authenticated' not in st.session_state:
