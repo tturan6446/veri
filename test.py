@@ -1,17 +1,51 @@
 # --- Streamlit Müşteri Segmentasyonu ve Limit Tahminleme Platformu ---
 
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from streamlit_option_menu import option_menu
 
 st.set_page_config(page_title="SmartLimit | Dashboard", page_icon="📊", layout="wide")
 
-# Session kontrolü
+# --- VERİ YÜKLEME + TEMİZLEME ---
+@st.cache_data
+def load_and_clean_merged_csv():
+    github_raw_prefix = "https://raw.githubusercontent.com/tturan6446/ITUbitirme/main/"
+    file_names = [f"merged_data_part{i}.csv" for i in range(1, 11)]
+
+    df_list = []
+    for file in file_names:
+        url = github_raw_prefix + file
+        st.write(f"📥 Yükleniyor: {url}")
+        df = pd.read_csv(url)
+        df_list.append(df)
+
+    df = pd.concat(df_list, ignore_index=True)
+
+    # --- Temizlik ---
+    def clean_currency(x):
+        if isinstance(x, str):
+            return float(x.replace('$', '').replace(',', '').strip())
+        return x
+
+    currency_columns = ['total_debt', 'yearly_income', 'credit_limit', 'amount']
+    for col in currency_columns:
+        df[col] = df[col].apply(clean_currency)
+
+    df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
+    df = df.drop(columns=['errors'], errors='ignore')
+
+    st.success(f"✅ Toplam temizlenmiş veri satırı: {len(df)}")
+    return df
+
+# --- SESSION KONTROLLERİ ---
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
 if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
-# CSS
+# --- CSS STİLLERİ ---
 st.markdown("""
 <style>
 body {
@@ -68,7 +102,7 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# Giriş ekranı
+# --- GİRİŞ EKRANI ---
 if not st.session_state['authenticated']:
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">SmartLimit Girişi</div>', unsafe_allow_html=True)
@@ -85,12 +119,17 @@ if not st.session_state['authenticated']:
             st.error("Hatalı kullanıcı adı veya şifre.")
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- ANA PANEL ---
 else:
     st.markdown(f"""
         <div style='text-align:center; padding:1rem; background:white; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom:1rem;'>
         😊 Hoşgeldiniz <b>{st.session_state['username'].title()}</b> | SmartLimit Paneli</div>
     """, unsafe_allow_html=True)
 
+    # Veri yükle
+    df = load_and_clean_merged_csv()
+
+    # Menü
     with st.sidebar:
         selected = option_menu(
             menu_title="Menü",
@@ -100,6 +139,7 @@ else:
             default_index=0
         )
 
+    # Ana Sayfa
     if selected == "Ana Sayfa":
         st.subheader("📊 Ana Sayfa")
         st.markdown("""
@@ -113,34 +153,59 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
+    # Segmentasyon
     elif selected == "Müşteri Segmentasyonu":
         st.subheader("🧩 Müşteri Segmentasyonu")
-        st.markdown("""
-        - K-Means ile segment ayrımı (PCA ile görselleştirme)
-        - Her segmentin profil özeti (ortalama gelir, borç, skor)
-        - Kart türü ve harcama davranışına göre analiz
-        """)
+        st.dataframe(df.head())
 
+    # Limit Tahminleme
     elif selected == "Limit Tahminleme Aracı":
         st.subheader("📈 Limit Tahminleme Aracı")
-        st.markdown("""
-        - Kullanıcıdan giriş al (gelir, borç, skor vb.)
-        - Eğitimli modelle kredi limiti tahmini
-        - Sonuç + model doğruluk metrikleri (MAPE, RMSE)
-        """)
+        st.markdown("Model entegrasyonu yapılacak...")
 
+    # EDA Paneli
     elif selected == "EDA Analizleri":
         st.subheader("📊 EDA (Keşifsel Veri Analizi)")
-        st.markdown("""
-        - Kategorik/sayısal değişken dağılımları
-        - Korelasyon matrisi, boxplotlar, outlier analizi
-        - Zaman serisi harcama analizi
-        """)
 
+        st.markdown("Veriye göre görselleştirme yap")
+
+        # Otomatik alan ayrımı
+        dimensions = df.select_dtypes(include='object').columns.tolist() + ['txn_date']
+        measures = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+
+        selected_dimension = st.multiselect("Dimension (kategorik ya da zaman)", dimensions, default=["card_brand"])
+        selected_measure = st.multiselect("Measure (sayısal değer)", measures, default=["amount"])
+
+        chart_type = st.selectbox("Grafik Türü", ["Bar Plot", "Histogram", "Trend Grafiği (Line)"])
+
+        if selected_dimension and selected_measure:
+            for dim in selected_dimension:
+                for meas in selected_measure:
+                    fig, ax = plt.subplots(figsize=(8, 4))
+                    if chart_type == "Bar Plot":
+                        plot_data = df.groupby(dim)[meas].mean().sort_values(ascending=False)
+                        sns.barplot(x=plot_data.index, y=plot_data.values, ax=ax)
+                        ax.set_ylabel(f"Ortalama {meas}")
+                        ax.set_title(f"{dim} bazında {meas} ortalaması")
+
+                    elif chart_type == "Histogram":
+                        sns.histplot(df[meas], bins=30, kde=True, ax=ax)
+                        ax.set_title(f"{meas} Histogramı")
+
+                    elif chart_type == "Trend Grafiği (Line)":
+                        if dim == "txn_date":
+                            time_data = df.groupby(df["txn_date"].dt.to_period("M"))[meas].sum()
+                            time_data.index = time_data.index.to_timestamp()
+                            sns.lineplot(x=time_data.index, y=time_data.values, ax=ax)
+                            ax.set_title(f"Aylık {meas} Değişimi")
+                            ax.set_ylabel(meas)
+                        else:
+                            st.warning("Trend grafiği sadece tarih boyutuyla çalışır.")
+                            continue
+
+                    st.pyplot(fig)
+
+    # Dark Web
     elif selected == "Dark Web Risk Paneli":
         st.subheader("⚠️ Dark Web Risk Paneli")
-        st.markdown("""
-        - Dark web'de görülen kartların kullanıcı profili
-        - Riskli kullanıcılar listesi ve skor bazlı sıralama
-        - Segmentlere göre risk analizi
-        """)
+        st.markdown("Model entegrasyonu yapılacak...")
