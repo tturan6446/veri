@@ -9,3 +9,4 @@ seaborn
 requests
 duckdb
 plotly
+os
