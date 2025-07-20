@@ -208,7 +208,7 @@ else:
             "Riskli & Düşük Gelirli": "https://drive.google.com/uc?id=1kT3tKIpV6TTytr8YoVCOwYJYZM1zKwbW",
             "Premium Müşteri": "https://drive.google.com/uc?id=1N76PFu8QsUlVnB2DRCnScmAjupIn6_au",
             "Gelişmekte Olan Müşteri": "https://drive.google.com/uc?id=1E7NMfP90ufwWq9XCZyN0NZYaf5rTnzQK",
-            "Borç Yükü Altında": "https://drive.google.com/uc?id=1OFDvE-IGYb3hzSbuqK7Ud9TUFYWuSRk7"
+            "Borç Yükü Altında": "https://drive.google.com/file/d/1OFDvE-IGYb3hzSbuqK7Ud9TUFYWuSRk7/view?usp=sharing"
         }
 
         segment_descriptions = {
