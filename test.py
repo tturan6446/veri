@@ -14,6 +14,23 @@ def load_data():
     return df
 
 df_sample = load_data()
+# --- VERİYİ TEMİZLE ve SAYISALA ÇEVİR ---
+features = df_sample[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
+features.dropna(inplace=True)
+
+# String olan '$' ve ',' karakterlerini temizle
+for col in ['credit_score', 'yearly_income', 'total_debt', 'amount']:
+    features[col] = (
+        features[col]
+        .astype(str)
+        .str.replace(r'[$,]', '', regex=True)
+        .astype(float)
+    )
+
+# --- SCALE ET ---
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(features)
+
 
 # --- SEGMENTASYON İÇİN VERİYİ HAZIRLA ---
 features = df_sample[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
