@@ -17,13 +17,11 @@ def load_and_clean_merged_csv():
     df_list = []
     for file in file_names:
         url = github_raw_prefix + file
-        st.write(f"📥 Yükleniyor: {url}")
         df = pd.read_csv(url)
         df_list.append(df)
 
     df = pd.concat(df_list, ignore_index=True)
 
-    # --- Temizlik ---
     def clean_currency(x):
         if isinstance(x, str):
             return float(x.replace('$', '').replace(',', '').strip())
@@ -34,7 +32,7 @@ def load_and_clean_merged_csv():
         df[col] = df[col].apply(clean_currency)
 
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
-    df = df.drop(columns=['errors'], errors='ignore')
+    df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
     st.success(f"✅ Toplam temizlenmiş veri satırı: {len(df)}")
     return df
@@ -119,17 +117,14 @@ if not st.session_state['authenticated']:
             st.error("Hatalı kullanıcı adı veya şifre.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- ANA PANEL ---
 else:
     st.markdown(f"""
         <div style='text-align:center; padding:1rem; background:white; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom:1rem;'>
         😊 Hoşgeldiniz <b>{st.session_state['username'].title()}</b> | SmartLimit Paneli</div>
     """, unsafe_allow_html=True)
 
-    # Veri yükle
     df = load_and_clean_merged_csv()
 
-    # Menü
     with st.sidebar:
         selected = option_menu(
             menu_title="Menü",
@@ -139,37 +134,21 @@ else:
             default_index=0
         )
 
-    # Ana Sayfa
     if selected == "Ana Sayfa":
         st.subheader("📊 Ana Sayfa")
-        st.markdown("""
-        - Genel istatistik özetleri (toplam müşteri, ortalama kredi limiti vb.)
-        - Hızlı grafik: Segment dağılımı, kart tipi dağılımı
-        - Kısa özet: Uygulamanın amacı ve yetenekleri
-        """)
-        st.markdown("""
-        <div class="centered-image">
-            <img src="https://images.ctfassets.net/3viuren4us1n/5DhTy3R6WNBbDZYMDQNCuo/ebc5e9d6e4a67ef9c7bb1f5cee176a6e/digital-transformation-banking-pioneer.jpg" alt="banking dashboard" />
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("Uygulama açıklaması ve genel özet bilgiler gelecektir.")
 
-    # Segmentasyon
     elif selected == "Müşteri Segmentasyonu":
         st.subheader("🧩 Müşteri Segmentasyonu")
         st.dataframe(df.head())
 
-    # Limit Tahminleme
     elif selected == "Limit Tahminleme Aracı":
         st.subheader("📈 Limit Tahminleme Aracı")
         st.markdown("Model entegrasyonu yapılacak...")
 
-    # EDA Paneli
     elif selected == "EDA Analizleri":
         st.subheader("📊 EDA (Keşifsel Veri Analizi)")
 
-        st.markdown("Veriye göre görselleştirme yap")
-
-        # Otomatik alan ayrımı
         dimensions = df.select_dtypes(include='object').columns.tolist() + ['txn_date']
         measures = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
 
@@ -205,7 +184,6 @@ else:
 
                     st.pyplot(fig)
 
-    # Dark Web
     elif selected == "Dark Web Risk Paneli":
         st.subheader("⚠️ Dark Web Risk Paneli")
         st.markdown("Model entegrasyonu yapılacak...")
