@@ -38,7 +38,7 @@ def load_and_clean_merged_csv():
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
     df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
-    # --- 3. SEGMENTASYON (K-MEANS) ---
+    # --- SEGMENTASYON ---
     from sklearn.preprocessing import StandardScaler
     from sklearn.cluster import KMeans
 
@@ -59,14 +59,13 @@ def load_and_clean_merged_csv():
     }
     features['segment_label'] = features['segment'].map(segment_map)
 
-    # Segment label'ı ana df ile birleştir
     df = df.merge(
         features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
         on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
         how='left'
     )
 
-    return df
+    return df  # Bu satır kesinlikle fonksiyonun içinde, yani aynı hizada olmalı!
 
 
 # --- EDA Yardımcı Fonksiyonu ---
