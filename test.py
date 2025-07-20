@@ -205,11 +205,12 @@ else:
         st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
 
         segment_visuals = {
-            "Riskli & Düşük Gelirli": "https://drive.google.com/uc?id=1kT3tKIpV6TTytr8YoVCOwYJYZM1zKwbW",
-            "Premium Müşteri": "https://drive.google.com/uc?id=1N76PFu8QsUlVnB2DRCnScmAjupIn6_au",
-            "Gelişmekte Olan Müşteri": "https://drive.google.com/uc?id=1E7NMfP90ufwWq9XCZyN0NZYaf5rTnzQK",
-            "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borc%20ic%CC%87inde.png"
-        }
+    "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
+    "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
+    "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/GelismekteOlan.png",
+    "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borc%20ic%CC%87inde.png"
+}
+
 
         segment_descriptions = {
             "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
