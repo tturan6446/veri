@@ -64,7 +64,7 @@ df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount',
               how='left')
 
 
-return df
+# HATALI RETURN DIŞINDA: return df
 
 # --- EDA Yardımcı Fonksiyonu ---
 def create_eda_dashboard_preview(df):
@@ -80,7 +80,7 @@ def create_eda_dashboard_preview(df):
     kart_limiti = df_sample.groupby('card_brand')['credit_limit'].mean().reset_index()
     borc_cinsiyet = df_sample.groupby('gender')['total_debt'].mean().reset_index()
 
-    return {
+# HATALI RETURN DIŞINDA:     return {
         "toplam_musteri": toplam_musteri,
         "ort_kredi_limiti": ort_kredi_limiti,
         "ort_gelir": ort_gelir,
@@ -107,7 +107,7 @@ def generate_advanced_kpi_and_charts(df):
     card_spending = df.groupby('card_brand')['amount'].sum().reset_index()
     gender_limit = df.groupby('gender')['credit_limit'].mean().reset_index()
 
-    return {
+# HATALI RETURN DIŞINDA:     return {
         "mtd_change_pct": round(mtd_change_pct, 2),
         "card_spending_df": card_spending,
         "gender_limit_df": gender_limit
