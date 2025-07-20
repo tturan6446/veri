@@ -55,7 +55,6 @@ segment_map = {
     1: "Premium Müşteri",
     2: "Gelişmekte Olan Müşteri",
     3: "Borç Yükü Altında"
-}
 features['segment_label'] = features['segment'].map(segment_map)
 
 # Segment label'ı ana df ile birleştir
@@ -85,8 +84,6 @@ def hesaplamalari_yap():
     "aylik_harcama_df": aylik_harcama,
     "kart_limiti_df": kart_limiti,
     "borc_cinsiyet_df": borc_cinsiyet
-    }
-    }
 
 
 # --- Gelişmiş KPI ve Alt Grafikler ---
@@ -110,8 +107,6 @@ def hesaplamalari_yap():
     return {
     "card_spending_df": card_spending,
     "gender_limit_df": gender_limit
-    }
-    }
 
 
 # --- SESSION KONTROLLERİ ---
@@ -125,7 +120,6 @@ st.markdown("""
 <style>
 body {
     background: linear-gradient(135deg, #e0f7fa, #ffccbc);
-}
 .login-box {
     background-color: white;
     padding: 3rem;
@@ -135,29 +129,24 @@ body {
     margin: auto;
     font-family: 'Segoe UI', sans-serif;
     margin-top: 6rem;
-}
 .login-title {
     text-align: center;
     font-size: 26px;
     font-weight: bold;
     color: #0288d1;
     margin-bottom: 2rem;
-}
 .stTextInput input {
     background-color: #e1f5fe;
     border-radius: 8px;
     padding: 10px;
-}
 .stButton>button {
     background-color: #0288d1;
     color: white;
     border-radius: 8px;
     padding: 0.6rem 1.2rem;
     font-weight: bold;
-}
 .stButton>button:hover {
     background-color: #01579b;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,14 +200,12 @@ else:
             "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/premium.png",
             "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/gelismekte.png",
             "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/borc_icinde.png"
-        }
 
         segment_descriptions = {
             "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
             "Premium Müşteri": "Geliri ve skoru yüksek, sadık müşteri.",
             "Gelişmekte Olan Müşteri": "Potansiyel var, gelişmeye açık.",
             "Borç Yükü Altında": "Harcama yüksek, borç oranı yüksek."
-        }
 
         # Segment bazlı metrik hesapla
         metrics = df.groupby('segment_label').agg({
