@@ -285,10 +285,10 @@ else:
             st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
 
             segment_visuals = {
-                "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/riskli.png",
-                "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/premium.png",
-                "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/gelismekte.png",
-                "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/borc_icinde.png"
+                "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
+                "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
+                "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelişmekte%20olan.png",
+                "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
             }
 
             segment_descriptions = {
