@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 from streamlit_option_menu import option_menu
+import os
+os.environ["STREAMLIT_SERVER_RUN_ON_SAVE"] = "false"
 
 st.set_page_config(page_title="SmartLimit | Dashboard", page_icon="📊", layout="wide")
 
