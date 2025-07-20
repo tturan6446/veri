@@ -54,8 +54,7 @@ segment_map = {
     0: "Riskli & Düşük Gelirli",
     1: "Premium Müşteri",
     2: "Gelişmekte Olan Müşteri",
-    3: "Borç Yükü Altında",
-features['segment_label'] = features['segment'].map(segment_map)
+    3: "Borç Yükü Altında"
 }
 
 # Segment label'ı ana df ile birleştir
