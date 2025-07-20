@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 from streamlit_option_menu import option_menu
 
 st.set_page_config(page_title="SmartLimit | Dashboard", page_icon="📊", layout="wide")
@@ -37,6 +38,30 @@ def load_and_clean_merged_csv():
     st.success(f"✅ Toplam temizlenmiş veri satırı: {len(df)}")
     return df
 
+# --- EDA Yardımcı Fonksiyonu ---
+def create_eda_dashboard_preview(df):
+    df_sample = df.copy()
+
+    toplam_musteri = df_sample['card_brand'].count()
+    ort_kredi_limiti = df_sample['credit_limit'].mean()
+    ort_gelir = df_sample['yearly_income'].mean()
+    ort_borc = df_sample['total_debt'].mean()
+
+    df_sample['txn_month'] = df_sample['txn_date'].dt.to_period("M").dt.to_timestamp()
+    aylik_harcama = df_sample.groupby('txn_month')['amount'].sum().reset_index()
+    kart_limiti = df_sample.groupby('card_brand')['credit_limit'].mean().reset_index()
+    borc_cinsiyet = df_sample.groupby('gender')['total_debt'].mean().reset_index()
+
+    return {
+        "toplam_musteri": toplam_musteri,
+        "ort_kredi_limiti": ort_kredi_limiti,
+        "ort_gelir": ort_gelir,
+        "ort_borc": ort_borc,
+        "aylik_harcama_df": aylik_harcama,
+        "kart_limiti_df": kart_limiti,
+        "borc_cinsiyet_df": borc_cinsiyet
+    }
+
 # --- SESSION KONTROLLERİ ---
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
@@ -48,12 +73,6 @@ st.markdown("""
 <style>
 body {
     background: linear-gradient(135deg, #e0f7fa, #ffccbc);
-    animation: gradientFlow 12s ease infinite;
-}
-@keyframes gradientFlow {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
 }
 .login-box {
     background-color: white;
@@ -86,16 +105,6 @@ body {
 }
 .stButton>button:hover {
     background-color: #01579b;
-}
-.centered-image {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-.centered-image img {
-    max-width: 80%;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -147,42 +156,33 @@ else:
         st.markdown("Model entegrasyonu yapılacak...")
 
     elif selected == "EDA Analizleri":
-        st.subheader("📊 EDA (Keşifsel Veri Analizi)")
+        st.subheader("📊 EDA (Power BI Dashboard Görünümü)")
 
-        dimensions = df.select_dtypes(include='object').columns.tolist() + ['txn_date']
-        measures = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+        eda = create_eda_dashboard_preview(df)
 
-        selected_dimension = st.multiselect("Dimension (kategorik ya da zaman)", dimensions, default=["card_brand"])
-        selected_measure = st.multiselect("Measure (sayısal değer)", measures, default=["amount"])
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Toplam Müşteri", f"{eda['toplam_musteri']:,}")
+        col2.metric("Ortalama Kredi Limiti", f"{eda['ort_kredi_limiti']:,.0f} ₺")
+        col3.metric("Ortalama Gelir", f"{eda['ort_gelir']:,.0f} ₺")
+        col4.metric("Ortalama Borç", f"{eda['ort_borc']:,.0f} ₺")
 
-        chart_type = st.selectbox("Grafik Türü", ["Bar Plot", "Histogram", "Trend Grafiği (Line)"])
+        st.markdown("### 📈 Aylık Harcama Trendleri")
+        fig1 = px.line(eda['aylik_harcama_df'], x="txn_month", y="amount", title="Aylık Toplam Harcama")
+        st.plotly_chart(fig1, use_container_width=True)
 
-        if selected_dimension and selected_measure:
-            for dim in selected_dimension:
-                for meas in selected_measure:
-                    fig, ax = plt.subplots(figsize=(8, 4))
-                    if chart_type == "Bar Plot":
-                        plot_data = df.groupby(dim)[meas].mean().sort_values(ascending=False)
-                        sns.barplot(x=plot_data.index, y=plot_data.values, ax=ax)
-                        ax.set_ylabel(f"Ortalama {meas}")
-                        ax.set_title(f"{dim} bazında {meas} ortalaması")
+        col5, col6 = st.columns(2)
 
-                    elif chart_type == "Histogram":
-                        sns.histplot(df[meas], bins=30, kde=True, ax=ax)
-                        ax.set_title(f"{meas} Histogramı")
+        with col5:
+            st.markdown("### 💳 Kart Markalarına Göre Kredi Limiti")
+            fig2 = px.bar(eda['kart_limiti_df'], x="card_brand", y="credit_limit", color="card_brand",
+                          title="Kart Tipine Göre Ortalama Limit")
+            st.plotly_chart(fig2, use_container_width=True)
 
-                    elif chart_type == "Trend Grafiği (Line)":
-                        if dim == "txn_date":
-                            time_data = df.groupby(df["txn_date"].dt.to_period("M"))[meas].sum()
-                            time_data.index = time_data.index.to_timestamp()
-                            sns.lineplot(x=time_data.index, y=time_data.values, ax=ax)
-                            ax.set_title(f"Aylık {meas} Değişimi")
-                            ax.set_ylabel(meas)
-                        else:
-                            st.warning("Trend grafiği sadece tarih boyutuyla çalışır.")
-                            continue
-
-                    st.pyplot(fig)
+        with col6:
+            st.markdown("### 👥 Cinsiyete Göre Ortalama Borç")
+            fig3 = px.bar(eda['borc_cinsiyet_df'], x="gender", y="total_debt", color="gender",
+                          title="Cinsiyete Göre Ortalama Borç")
+            st.plotly_chart(fig3, use_container_width=True)
 
     elif selected == "Dark Web Risk Paneli":
         st.subheader("⚠️ Dark Web Risk Paneli")
