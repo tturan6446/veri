@@ -207,8 +207,8 @@ else:
         segment_visuals = {
     "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
     "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
-    "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/GelismekteOlan.png",
-    "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borc%20ic%CC%87inde.png"
+    "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelis%CC%A7mekte%20olan.png",
+    "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
 }
 
 
