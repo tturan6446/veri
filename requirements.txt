@@ -5,8 +5,6 @@ seaborn
 scikit-learn
 streamlit
 streamlit-option-menu
-seaborn
 requests
 duckdb
 plotly
-os
