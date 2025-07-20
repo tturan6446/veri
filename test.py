@@ -56,6 +56,7 @@ segment_map = {
     2: "Gelişmekte Olan Müşteri",
     3: "Borç Yükü Altında",
 features['segment_label'] = features['segment'].map(segment_map)
+}
 
 # Segment label'ı ana df ile birleştir
 df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
