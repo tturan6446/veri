@@ -14,22 +14,19 @@ def load_data():
     return df
 
 df_sample = load_data()
-# --- VERİYİ TEMİZLE ve SAYISALA ÇEVİR ---
-features = df_sample[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
-features.dropna(inplace=True)
 
-# String olan '$' ve ',' karakterlerini temizle
-for col in ['credit_score', 'yearly_income', 'total_debt', 'amount']:
-    features[col] = (
-        features[col]
-        .astype(str)
-        .str.replace(r'[$,]', '', regex=True)
-        .astype(float)
-    )
+def clean_currency(x):
+    if isinstance(x, str):
+        return float(x.replace('$', '').replace(',', '').strip())
+    return x
 
-# --- SCALE ET ---
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(features)
+currency_columns = ['total_debt', 'yearly_income', 'credit_limit', 'amount']
+for col in currency_columns:
+    df[col] = df[col].apply(clean_currency)
+
+df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
+df = df.drop(columns=['errors'])
+
 
 
 # --- SEGMENTASYON İÇİN VERİYİ HAZIRLA ---
