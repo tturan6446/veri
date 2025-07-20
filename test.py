@@ -4,28 +4,33 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 import streamlit as st
 
-# --- VERİ YÜKLE ---
-@st.cache_data
-def load_data():
-    url = "https://raw.githubusercontent.com/tturan6446/ITUbitirme/main/merged_data_part1.csv"  # örnek, istersen tüm partları birleştirebilirim
-    df = pd.read_csv(url)
-    df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
-    df['txn_month'] = df['txn_date'].dt.to_period('M').astype(str)
-    return df
+import pandas as pd
 
-df_sample = load_data()
-
+# --- $ ve , işaretlerini silen fonksiyon ---
 def clean_currency(x):
     if isinstance(x, str):
         return float(x.replace('$', '').replace(',', '').strip())
     return x
 
-currency_columns = ['total_debt', 'yearly_income', 'credit_limit', 'amount']
-for col in currency_columns:
-    df[col] = df[col].apply(clean_currency)
+# --- VERİYİ YÜKLE ---
+@st.cache_data
+def load_data():
+    url = "https://raw.githubusercontent.com/tturan6446/ITUbitirme/main/merged_data_part1.csv"
+    df = pd.read_csv(url)
 
-df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
-df = df.drop(columns=['errors'])
+    # Tarih işlemleri
+    df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
+    df['txn_month'] = df['txn_date'].dt.to_period('M').astype(str)
+
+    # $ ve , işaretlerini temizle
+    currency_columns = ['total_debt', 'yearly_income', 'credit_limit', 'amount']
+    for col in currency_columns:
+        df[col] = df[col].apply(clean_currency)
+
+    return df
+
+df_sample = load_data()
+
 
 
 
