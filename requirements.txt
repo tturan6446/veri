@@ -3,3 +3,4 @@ pandas
 selenium
 matplotlib
 streamlit-option-menu
+seaborn
