@@ -36,35 +36,35 @@ def load_and_clean_merged_csv():
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
     df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
-    
-# --- 3. SEGMENTASYON (K-MEANS) ---
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+    # --- K-Means Segmentasyon ---
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.cluster import KMeans
 
-features = df[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
-features = features.dropna()
+    features = df[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
+    features = features.dropna()
 
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(features)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(features)
 
-kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
-features['segment'] = kmeans.fit_predict(X_scaled)
+    kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+    features['segment'] = kmeans.fit_predict(X_scaled)
 
-segment_map = {
-    0: "Riskli & Düşük Gelirli",
-    1: "Premium Müşteri",
-    2: "Gelişmekte Olan Müşteri",
-    3: "Borç Yükü Altında"
-}
-features['segment_label'] = features['segment'].map(segment_map)
+    segment_map = {
+        0: "Riskli & Düşük Gelirli",
+        1: "Premium Müşteri",
+        2: "Gelişmekte Olan Müşteri",
+        3: "Borç Yükü Altında"
+    }
+    features['segment_label'] = features['segment'].map(segment_map)
 
-# Segment label'ı ana df ile birleştir
-df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
-              on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
-              how='left')
+    df = df.merge(
+        features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
+        on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
+        how='left'
+    )
 
+    return df  # ✅ DOĞRU GİRİNTİDE
 
-return df
 
 # --- EDA Yardımcı Fonksiyonu ---
 def create_eda_dashboard_preview(df):
