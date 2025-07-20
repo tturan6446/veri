@@ -208,7 +208,7 @@ else:
             "Riskli & Düşük Gelirli": "https://drive.google.com/uc?id=1kT3tKIpV6TTytr8YoVCOwYJYZM1zKwbW",
             "Premium Müşteri": "https://drive.google.com/uc?id=1N76PFu8QsUlVnB2DRCnScmAjupIn6_au",
             "Gelişmekte Olan Müşteri": "https://drive.google.com/uc?id=1E7NMfP90ufwWq9XCZyN0NZYaf5rTnzQK",
-            "Borç Yükü Altında": "https://drive.google.com/file/d/1OFDvE-IGYb3hzSbuqK7Ud9TUFYWuSRk7/view?usp=sharing"
+            "Borç Yükü Altında": "https://github.com/tturan6446/veri/blob/main/Borc%CC%A7%20ic%CC%A7inde.png"
         }
 
         segment_descriptions = {
