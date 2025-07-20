@@ -36,35 +36,35 @@ def load_and_clean_merged_csv():
     df['txn_date'] = pd.to_datetime(df['txn_date'], errors='coerce')
     df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
 
-    # --- K-Means Segmentasyon ---
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.cluster import KMeans
+    
+# --- 3. SEGMENTASYON (K-MEANS) ---
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
-    features = df[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
-    features = features.dropna()
+features = df[['credit_score', 'yearly_income', 'total_debt', 'amount']].copy()
+features = features.dropna()
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(features)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(features)
 
-    kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
-    features['segment'] = kmeans.fit_predict(X_scaled)
+kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
+features['segment'] = kmeans.fit_predict(X_scaled)
 
-    segment_map = {
-        0: "Riskli & Düşük Gelirli",
-        1: "Premium Müşteri",
-        2: "Gelişmekte Olan Müşteri",
-        3: "Borç Yükü Altında"
-    }
-    features['segment_label'] = features['segment'].map(segment_map)
+segment_map = {
+    0: "Riskli & Düşük Gelirli",
+    1: "Premium Müşteri",
+    2: "Gelişmekte Olan Müşteri",
+    3: "Borç Yükü Altında"
+}
+features['segment_label'] = features['segment'].map(segment_map)
 
-    df = df.merge(
-        features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
-        on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
-        how='left'
-    )
+# Segment label'ı ana df ile birleştir
+df = df.merge(features[['credit_score', 'yearly_income', 'total_debt', 'amount', 'segment_label']],
+              on=['credit_score', 'yearly_income', 'total_debt', 'amount'],
+              how='left')
 
-    return df  # ✅ DOĞRU GİRİNTİDE
 
+return df
 
 # --- EDA Yardımcı Fonksiyonu ---
 def create_eda_dashboard_preview(df):
@@ -199,18 +199,18 @@ else:
         st.markdown("Uygulama açıklaması ve genel özet bilgiler gelecektir.")
 
     
+    
     elif selected == "Müşteri Segmentasyonu":
         st.subheader("🧩 Müşteri Segmentasyonu")
 
         st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
 
         segment_visuals = {
-    "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
-    "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
-    "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelis%CC%A7mekte%20olan.png",
-    "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
-}
-
+            "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/riskli.png",
+            "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/premium.png",
+            "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/gelismekte.png",
+            "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/borc_icinde.png"
+        }
 
         segment_descriptions = {
             "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
@@ -218,6 +218,13 @@ else:
             "Gelişmekte Olan Müşteri": "Potansiyel var, gelişmeye açık.",
             "Borç Yükü Altında": "Harcama yüksek, borç oranı yüksek."
         }
+
+        # Segment bazlı metrik hesapla
+        metrics = df.groupby('segment_label').agg({
+            'credit_limit': 'mean',
+            'total_debt': 'mean',
+            'amount': 'mean'
+        }).reset_index()
 
         sorted_segments = [
             "Riskli & Düşük Gelirli",
@@ -233,9 +240,20 @@ else:
                 if i < len(sorted_segments):
                     segment = sorted_segments[i]
                     with cols[col_index]:
-                        st.markdown(f"#### <div style='text-align:center; font-size:20px; font-weight:bold'>{segment}</div>", unsafe_allow_html=True)
-                        st.markdown(f"<div style='text-align:center'><img src='{segment_visuals[segment]}' width='160'></div>", unsafe_allow_html=True)
-                        st.markdown(f"<div style='text-align:center; color:grey'>{segment_descriptions[segment]}</div>", unsafe_allow_html=True)
+                        st.markdown(f"""
+                            <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
+                                <h4 style='font-weight:bold'>{segment}</h4>
+                                <img src='{segment_visuals[segment]}' width='120'><br>
+                                <p style='color:gray'>{segment_descriptions[segment]}</p>
+                        """, unsafe_allow_html=True)
+
+                        metrik = metrics[metrics['segment_label'] == segment]
+                        if not metrik.empty:
+                            st.markdown(f"<b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            st.markdown(f"<b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {metrik['amount'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+
+                        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("---")
 
