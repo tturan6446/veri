@@ -189,34 +189,12 @@ def generate_advanced_kpi_and_charts(df):
         "gender_limit_df": gender_limit
     }
 
-# --- SESSION KONTROLLERİ ---
-if 'authenticated' not in st.session_state:
-    st.session_state['authenticated'] = False
-if 'username' not in st.session_state:
-    st.session_state['username'] = ""
-
 # --- CSS STİLLERİ ---
+# Removed login-box and login-title specific styles as they are no longer needed for the login screen.
 st.markdown("""
 <style>
 body {
     background: linear-gradient(135deg, #e0f7fa, #ffccbc);
-}
-.login-box {
-    background-color: white;
-    padding: 3rem;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    max-width: 420px;
-    margin: auto;
-    font-family: 'Segoe UI', sans-serif;
-    margin-top: 6rem;
-}
-.login-title {
-    text-align: center;
-    font-size: 26px;
-    font-weight: bold;
-    color: #0288d1;
-    margin-bottom: 2rem;
 }
 .stTextInput input {
     background-color: #e1f5fe;
@@ -236,182 +214,167 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# --- GİRİŞ EKRANI ---
-if not st.session_state['authenticated']:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">SmartLimit Girişi</div>', unsafe_allow_html=True)
+# --- ANA UYGULAMA AKIŞI (Giriş Ekranı Olmadan) ---
 
-    username = st.text_input("Kullanıcı Adı")
-    password = st.text_input("Şifre", type="password")
+# Display a welcome message at the top
+st.markdown(f"""
+    <div style='text-align:center; padding:1rem; background:white; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom:1rem;'>
+    😊 Hoşgeldiniz | SmartLimit Paneli</div>
+""", unsafe_allow_html=True)
 
-    if st.button("Giriş Yap"):
-        if username == "tolga" and password == "data123":
-            st.session_state['authenticated'] = True
-            st.session_state['username'] = username
-            st.rerun()
-        else:
-            st.error("Hatalı kullanıcı adı veya şifre.")
-    st.markdown('</div>', unsafe_allow_html=True)
+# Load and clean data directly
+df = load_and_clean_merged_csv()
 
+# Check if df is empty after loading and cleaning
+if df.empty:
+    st.warning("Veri yüklenemedi veya temizleme sonrası boş kaldı. Lütfen veri kaynaklarını kontrol edin.")
 else:
-    st.markdown(f"""
-        <div style='text-align:center; padding:1rem; background:white; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom:1rem;'>
-        😊 Hoşgeldiniz <b>{st.session_state['username'].title()}</b> | SmartLimit Paneli</div>
-    """, unsafe_allow_html=True)
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Menü",
+            options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri", "Dark Web Risk Paneli"],
+            icons=["house", "pie-chart", "activity", "bar-chart-line", "shield-exclamation"],
+            menu_icon="grid",
+            default_index=0
+        )
 
-    # Load and clean data ONLY after successful authentication
-    df = load_and_clean_merged_csv()
+    if selected == "Ana Sayfa":
+        st.subheader("📊 Ana Sayfa")
+        st.markdown("Uygulama açıklaması ve genel özet bilgiler gelecektir.")
+    
+    elif selected == "Müşteri Segmentasyonu":
+        st.subheader("🧩 Müşteri Segmentasyonu")
 
-    # Check if df is empty after loading and cleaning
-    if df.empty:
-        st.warning("Veri yüklenemedi veya temizleme sonrası boş kaldı. Lütfen veri kaynaklarını kontrol edin.")
-    else:
-        with st.sidebar:
-            selected = option_menu(
-                menu_title="Menü",
-                options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri", "Dark Web Risk Paneli"],
-                icons=["house", "pie-chart", "activity", "bar-chart-line", "shield-exclamation"],
-                menu_icon="grid",
-                default_index=0
-            )
+        st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
 
-        if selected == "Ana Sayfa":
-            st.subheader("📊 Ana Sayfa")
-            st.markdown("Uygulama açıklaması ve genel özet bilgiler gelecektir.")
-        
-        elif selected == "Müşteri Segmentasyonu":
-            st.subheader("🧩 Müşteri Segmentasyonu")
+        segment_visuals = {
+            "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/riskli.png",
+            "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/premium.png",
+            "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/gelismekte.png",
+            "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/borc_icinde.png"
+        }
 
-            st.markdown("### Müşteri Grupları (K-Means Sonuçlarına Göre)")
+        segment_descriptions = {
+            "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
+            "Premium Müşteri": "Geliri ve skoru yüksek, sadık müşteri.",
+            "Gelişmekte Olan Müşteri": "Potansiyel var, gelişmeye açık.",
+            "Borç Yükü Altında": "Harcama yüksek, borç oranı yüksek."
+        }
 
-            segment_visuals = {
-                "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
-                "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
-                "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelişmekte%20olan.png",
-                "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
-            }
+        # Segment bazlı metrik hesapla
+        # Ensure segment_label exists and handle cases where it might be missing due to NaNs
+        if 'segment_label' in df.columns and not df['segment_label'].isnull().all():
+            metrics = df.groupby('segment_label').agg({
+                'credit_limit': 'mean',
+                'total_debt': 'mean',
+                'amount': 'mean'
+            }).reset_index()
+        else:
+            st.warning("Segmentasyon verisi bulunamadı veya tüm değerler eksik. Lütfen veri yükleme ve segmentasyon adımlarını kontrol edin.")
+            metrics = pd.DataFrame(columns=['segment_label', 'credit_limit', 'total_debt', 'amount'])
 
-            segment_descriptions = {
-                "Riskli & Düşük Gelirli": "Gelir seviyesi düşük, kredi skoru riskli.",
-                "Premium Müşteri": "Geliri ve skoru yüksek, sadık müşteri.",
-                "Gelişmekte Olan Müşteri": "Potansiyel var, gelişmeye açık.",
-                "Borç Yükü Altında": "Harcama yüksek, borç oranı yüksek."
-            }
 
-            # Segment bazlı metrik hesapla
-            # Ensure segment_label exists and handle cases where it might be missing due to NaNs
-            if 'segment_label' in df.columns and not df['segment_label'].isnull().all():
-                metrics = df.groupby('segment_label').agg({
-                    'credit_limit': 'mean',
-                    'total_debt': 'mean',
-                    'amount': 'mean'
-                }).reset_index()
+        sorted_segments = [
+            "Riskli & Düşük Gelirli",
+            "Premium Müşteri",
+            "Gelişmekte Olan Müşteri",
+            "Borç Yükü Altında"
+        ]
+
+        for row in range(2):
+            cols = st.columns(2)
+            for col_index in range(2):
+                i = row * 2 + col_index
+                if i < len(sorted_segments):
+                    segment = sorted_segments[i]
+                    with cols[col_index]:
+                        st.markdown(f"""
+                            <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
+                                <h4 style='font-weight:bold'>{segment}</h4>
+                                <img src='{segment_visuals[segment]}' width='120'><br>
+                                <p style='color:gray'>{segment_descriptions[segment]}</p>
+                        """, unsafe_allow_html=True)
+
+                        metrik = metrics[metrics['segment_label'] == segment]
+                        if not metrik.empty:
+                            st.markdown(f"<b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            st.markdown(f"<b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {metrik['amount'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                        else:
+                            st.info(f"{segment} için metrik bulunamadı.")
+
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        if 'segment_label' in df.columns and not df['segment_label'].isnull().all():
+            seg_counts = df['segment_label'].value_counts().reset_index()
+            seg_counts.columns = ['Segment', 'Müşteri Sayısı']
+            fig = px.bar(seg_counts, x='Segment', y='Müşteri Sayısı', color='Segment', title="Segment Dağılımı")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Segment dağılımı grafiği için segmentasyon verisi eksik veya tüm değerler boş.")
+
+
+    elif selected == "Limit Tahminleme Aracı":
+        st.subheader("📈 Limit Tahminleme Aracı")
+        st.markdown("Model entegrasyonu yapılacak...")
+
+    elif selected == "EDA Analizleri":
+        st.subheader("📊 EDA (Power BI Dashboard Görünümü)")
+
+        eda = create_eda_dashboard_preview(df)
+        advanced = generate_advanced_kpi_and_charts(df)
+
+        col1, col2, col3, col4, col5 = st.columns(5)
+        col1.metric("Toplam Müşteri", f"{eda['toplam_musteri']:,}")
+        col2.metric("Ortalama Kredi Limiti", f"{eda['ort_kredi_limiti']:,.0f} ₺")
+        col3.metric("Ortalama Gelir", f"{eda['ort_gelir']:,.0f} ₺")
+        col4.metric("Ortalama Borç", f"{eda['ort_borc']:,.0f} ₺")
+        col5.metric("MTD Limit Artışı", f"{advanced['mtd_change_pct']}%", delta=f"{advanced['mtd_change_pct']}%")
+
+        st.markdown("### 📈 Aylık Harcama Trendleri")
+        if not eda['aylik_harcama_df'].empty:
+            fig1 = px.line(eda['aylik_harcama_df'], x="txn_month", y="amount", title="Aylık Toplam Harcama")
+            st.plotly_chart(fig1, use_container_width=True)
+        else:
+            st.info("Aylık harcama trendleri için veri bulunamadı.")
+
+        col6, col7 = st.columns(2)
+        with col6:
+            st.markdown("### 💳 Kart Markalarına Göre Kredi Limiti")
+            if not eda['kart_limiti_df'].empty:
+                fig2 = px.bar(eda['kart_limiti_df'], x="card_brand", y="credit_limit", color="card_brand",
+                              title="Kart Tipine Göre Ortalama Limit")
+                st.plotly_chart(fig2, use_container_width=True)
             else:
-                st.warning("Segmentasyon verisi bulunamadı veya tüm değerler eksik. Lütfen veri yükleme ve segmentasyon adımlarını kontrol edin.")
-                metrics = pd.DataFrame(columns=['segment_label', 'credit_limit', 'total_debt', 'amount'])
+                st.info("Kart markalarına göre kredi limiti için veri bulunamadı.")
 
-
-            sorted_segments = [
-                "Riskli & Düşük Gelirli",
-                "Premium Müşteri",
-                "Gelişmekte Olan Müşteri",
-                "Borç Yükü Altında"
-            ]
-
-            for row in range(2):
-                cols = st.columns(2)
-                for col_index in range(2):
-                    i = row * 2 + col_index
-                    if i < len(sorted_segments):
-                        segment = sorted_segments[i]
-                        with cols[col_index]:
-                            st.markdown(f"""
-                                <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
-                                    <h4 style='font-weight:bold'>{segment}</h4>
-                                    <img src='{segment_visuals[segment]}' width='120'><br>
-                                    <p style='color:gray'>{segment_descriptions[segment]}</p>
-                            """, unsafe_allow_html=True)
-
-                            metrik = metrics[metrics['segment_label'] == segment]
-                            if not metrik.empty:
-                                st.markdown(f"<b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺", unsafe_allow_html=True)
-                                st.markdown(f"<b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺", unsafe_allow_html=True)
-                                st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {metrik['amount'].values[0]:,.0f} ₺", unsafe_allow_html=True)
-                            else:
-                                st.info(f"{segment} için metrik bulunamadı.")
-
-                            st.markdown("</div>", unsafe_allow_html=True)
-
-            st.markdown("---")
-
-            if 'segment_label' in df.columns and not df['segment_label'].isnull().all():
-                seg_counts = df['segment_label'].value_counts().reset_index()
-                seg_counts.columns = ['Segment', 'Müşteri Sayısı']
-                fig = px.bar(seg_counts, x='Segment', y='Müşteri Sayısı', color='Segment', title="Segment Dağılımı")
-                st.plotly_chart(fig, use_container_width=True)
+        with col7:
+            st.markdown("### 👥 Cinsiyete Göre Ortalama Borç")
+            if not eda['borc_cinsiyet_df'].empty:
+                fig3 = px.bar(eda['borc_cinsiyet_df'], x="gender", y="total_debt", color="gender",
+                              title="Cinsiyete Göre Ortalama Borç")
+                st.plotly_chart(fig3, use_container_width=True)
             else:
-                st.info("Segment dağılımı grafiği için segmentasyon verisi eksik veya tüm değerler boş.")
+                st.info("Cinsiyete göre ortalama borç için veri bulunamadı.")
 
+        st.markdown("### 💸 Kart Tipine Göre Harcama")
+        if not advanced['card_spending_df'].empty:
+            fig4 = px.bar(advanced['card_spending_df'], x="card_brand", y="amount", color="card_brand",
+                          title="Kart Tipine Göre Toplam Harcama")
+            st.plotly_chart(fig4, use_container_width=True)
+        else:
+            st.info("Kart tipine göre harcama için veri bulunamadı.")
 
-        elif selected == "Limit Tahminleme Aracı":
-            st.subheader("📈 Limit Tahminleme Aracı")
-            st.markdown("Model entegrasyonu yapılacak...")
+        st.markdown("### 👤 Cinsiyete Göre Ortalama Kredi Limiti")
+        if not advanced['gender_limit_df'].empty:
+            fig5 = px.bar(advanced['gender_limit_df'], x="gender", y="credit_limit", color="gender",
+                          title="Cinsiyete Göre Ortalama Kredi Limiti")
+            st.plotly_chart(fig5, use_container_width=True)
+        else:
+            st.info("Cinsiyete göre ortalama kredi limiti için veri bulunamadı.")
 
-        elif selected == "EDA Analizleri":
-            st.subheader("📊 EDA (Power BI Dashboard Görünümü)")
-
-            eda = create_eda_dashboard_preview(df)
-            advanced = generate_advanced_kpi_and_charts(df)
-
-            col1, col2, col3, col4, col5 = st.columns(5)
-            col1.metric("Toplam Müşteri", f"{eda['toplam_musteri']:,}")
-            col2.metric("Ortalama Kredi Limiti", f"{eda['ort_kredi_limiti']:,.0f} ₺")
-            col3.metric("Ortalama Gelir", f"{eda['ort_gelir']:,.0f} ₺")
-            col4.metric("Ortalama Borç", f"{eda['ort_borc']:,.0f} ₺")
-            col5.metric("MTD Limit Artışı", f"{advanced['mtd_change_pct']}%", delta=f"{advanced['mtd_change_pct']}%")
-
-            st.markdown("### 📈 Aylık Harcama Trendleri")
-            if not eda['aylik_harcama_df'].empty:
-                fig1 = px.line(eda['aylik_harcama_df'], x="txn_month", y="amount", title="Aylık Toplam Harcama")
-                st.plotly_chart(fig1, use_container_width=True)
-            else:
-                st.info("Aylık harcama trendleri için veri bulunamadı.")
-
-            col6, col7 = st.columns(2)
-            with col6:
-                st.markdown("### 💳 Kart Markalarına Göre Kredi Limiti")
-                if not eda['kart_limiti_df'].empty:
-                    fig2 = px.bar(eda['kart_limiti_df'], x="card_brand", y="credit_limit", color="card_brand",
-                                  title="Kart Tipine Göre Ortalama Limit")
-                    st.plotly_chart(fig2, use_container_width=True)
-                else:
-                    st.info("Kart markalarına göre kredi limiti için veri bulunamadı.")
-
-            with col7:
-                st.markdown("### 👥 Cinsiyete Göre Ortalama Borç")
-                if not eda['borc_cinsiyet_df'].empty:
-                    fig3 = px.bar(eda['borc_cinsiyet_df'], x="gender", y="total_debt", color="gender",
-                                  title="Cinsiyete Göre Ortalama Borç")
-                    st.plotly_chart(fig3, use_container_width=True)
-                else:
-                    st.info("Cinsiyete göre ortalama borç için veri bulunamadı.")
-
-            st.markdown("### 💸 Kart Tipine Göre Harcama")
-            if not advanced['card_spending_df'].empty:
-                fig4 = px.bar(advanced['card_spending_df'], x="card_brand", y="amount", color="card_brand",
-                              title="Kart Tipine Göre Toplam Harcama")
-                st.plotly_chart(fig4, use_container_width=True)
-            else:
-                st.info("Kart tipine göre harcama için veri bulunamadı.")
-
-            st.markdown("### 👤 Cinsiyete Göre Ortalama Kredi Limiti")
-            if not advanced['gender_limit_df'].empty:
-                fig5 = px.bar(advanced['gender_limit_df'], x="gender", y="credit_limit", color="gender",
-                              title="Cinsiyete Göre Ortalama Kredi Limiti")
-                st.plotly_chart(fig5, use_container_width=True)
-            else:
-                st.info("Cinsiyete göre ortalama kredi limiti için veri bulunamadı.")
-
-        elif selected == "Dark Web Risk Paneli":
-            st.subheader("⚠️ Dark Web Risk Paneli")
-            st.markdown("Model entegrasyonu yapılacak...")
+    elif selected == "Dark Web Risk Paneli":
+        st.subheader("⚠️ Dark Web Risk Paneli")
+        st.markdown("Model entegrasyonu yapılacak...")
