@@ -304,20 +304,13 @@ else:
                 if i < len(sorted_segments):
                     segment = sorted_segments[i]
                     with cols[col_index]:
-                        # Start the card div
-                        st.markdown(f"""
-                            <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
-                                <h4 style='font-weight:bold'>{segment}</h4>
-                                <img src='{segment_visuals[segment]}' width='120'><br>
-                                <p style='color:gray'>{segment_descriptions[segment]}</p>
-                        """, unsafe_allow_html=True)
-
+                        # Prepare metric strings
+                        metric_html = ""
                         metrik = metrics[metrics['segment_label'] == segment]
                         
                         if not metrik.empty:
-                            # Metrics moved inside the card div
-                            st.markdown(f"<p class='segment-metric'><b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺</p>", unsafe_allow_html=True)
-                            st.markdown(f"<p class='segment-metric'><b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺</p>", unsafe_allow_html=True)
+                            metric_html += f"<p class='segment-metric'><b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺</p>"
+                            metric_html += f"<p class='segment-metric'><b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺</p>"
                             
                             # Apply override for 'Ortalama Yıllık Harcama'
                             if segment in override_amounts:
@@ -327,11 +320,19 @@ else:
 
                             # Custom formatting for Turkish locale (dot for thousands, comma for decimals)
                             formatted_amount = f"{display_amount:,.2f}".replace(",", "TEMP_COMMA").replace(".", ",").replace("TEMP_COMMA", ".") + " ₺"
-                            st.markdown(f"<p class='segment-metric'><b>Ortalama Yıllık Harcama:</b> {formatted_amount}</p>", unsafe_allow_html=True)
+                            metric_html += f"<p class='segment-metric'><b>Ortalama Yıllık Harcama:</b> {formatted_amount}</p>"
                         else:
-                            st.info(f"{segment} için metrik bulunamadı.")
+                            metric_html += f"<p class='segment-metric'><i>{segment} için metrik bulunamadı.</i></p>"
 
-                        st.markdown("</div>", unsafe_allow_html=True) # Close the card div
+                        # Construct the entire card HTML in a single markdown call
+                        st.markdown(f"""
+                            <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
+                                <h4 style='font-weight:bold'>{segment}</h4>
+                                <img src='{segment_visuals[segment]}' width='120'><br>
+                                <p style='color:gray'>{segment_descriptions[segment]}</p>
+                                {metric_html} <!-- Insert the metrics HTML here -->
+                            </div>
+                        """, unsafe_allow_html=True)
 
         st.markdown("---")
 
