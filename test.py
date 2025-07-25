@@ -211,6 +211,16 @@ body {
 .stButton>button:hover {
     background-color: #01579b;
 }
+/* Style for metrics inside the card */
+.segment-metric {
+    text-align: left; /* Align text to the left within the card */
+    margin-top: 10px; /* Add some space above the metrics */
+    font-size: 14px; /* Adjust font size for better fit */
+    color: #333; /* Darker text for readability */
+}
+.segment-metric b {
+    color: #0288d1; /* Highlight metric labels */
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -294,6 +304,7 @@ else:
                 if i < len(sorted_segments):
                     segment = sorted_segments[i]
                     with cols[col_index]:
+                        # Start the card div
                         st.markdown(f"""
                             <div style='border: 1px solid #ccc; border-radius: 12px; padding: 20px; text-align:center; background-color: #f9f9f9'>
                                 <h4 style='font-weight:bold'>{segment}</h4>
@@ -304,8 +315,9 @@ else:
                         metrik = metrics[metrics['segment_label'] == segment]
                         
                         if not metrik.empty:
-                            st.markdown(f"<b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺", unsafe_allow_html=True)
-                            st.markdown(f"<b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            # Metrics moved inside the card div
+                            st.markdown(f"<p class='segment-metric'><b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺</p>", unsafe_allow_html=True)
+                            st.markdown(f"<p class='segment-metric'><b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺</p>", unsafe_allow_html=True)
                             
                             # Apply override for 'Ortalama Yıllık Harcama'
                             if segment in override_amounts:
@@ -315,11 +327,11 @@ else:
 
                             # Custom formatting for Turkish locale (dot for thousands, comma for decimals)
                             formatted_amount = f"{display_amount:,.2f}".replace(",", "TEMP_COMMA").replace(".", ",").replace("TEMP_COMMA", ".") + " ₺"
-                            st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {formatted_amount}", unsafe_allow_html=True)
+                            st.markdown(f"<p class='segment-metric'><b>Ortalama Yıllık Harcama:</b> {formatted_amount}</p>", unsafe_allow_html=True)
                         else:
                             st.info(f"{segment} için metrik bulunamadı.")
 
-                        st.markdown("</div>", unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True) # Close the card div
 
         st.markdown("---")
 
