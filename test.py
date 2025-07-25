@@ -242,8 +242,9 @@ else:
     with st.sidebar:
         selected = option_menu(
             menu_title="Menü",
-            options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri", "Dark Web Risk Paneli"],
-            icons=["house", "pie-chart", "activity", "bar-chart-line", "shield-exclamation"],
+            # Removed "Dark Web Risk Paneli" from the options
+            options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri"],
+            icons=["house", "pie-chart", "activity", "bar-chart-line"], # Removed shield-exclamation icon
             menu_icon="grid",
             default_index=0
         )
@@ -260,8 +261,8 @@ else:
         segment_visuals = {
             "Riskli & Düşük Gelirli": "https://raw.githubusercontent.com/tturan6446/veri/main/Riskli.png",
             "Premium Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Premium.png",
-            "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelişmekte%20olan.png",
-            "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
+            "Gelişmekte Olan Müşteri": "https://raw.githubusercontent.com/tturan6446/veri/main/Gelişmekte%20olan.png",
+            "Borç Yükü Altında": "https://raw.githubusercontent.com/tturan6446/veri/main/Borç%20içinde.png"
         }
 
         segment_descriptions = {
@@ -404,6 +405,7 @@ else:
         else:
             st.info("Cinsiyete göre ortalama kredi limiti için veri bulunamadı.")
 
-    elif selected == "Dark Web Risk Paneli":
-        st.subheader("⚠️ Dark Web Risk Paneli")
-        st.markdown("Model entegrasyonu yapılacak...")
+    # Removed the "Dark Web Risk Paneli" section
+    # elif selected == "Dark Web Risk Paneli":
+    #     st.subheader("⚠️ Dark Web Risk Paneli")
+    #     st.markdown("Model entegrasyonu yapılacak...")
