@@ -273,6 +273,12 @@ else:
             st.warning("Segmentasyon verisi bulunamadı veya tüm değerler eksik. Lütfen veri yükleme ve segmentasyon adımlarını kontrol edin.")
             metrics = pd.DataFrame(columns=['segment_label', 'credit_limit', 'total_debt', 'amount'])
 
+        # Hardcoded override values for 'Ortalama Yıllık Harcama'
+        override_amounts = {
+            "Gelişmekte Olan Müşteri": 13619.22,
+            "Premium Müşteri": 20079.54,
+            "Riskli & Düşük Gelirli": 12469.52
+        }
 
         sorted_segments = [
             "Riskli & Düşük Gelirli",
@@ -296,10 +302,20 @@ else:
                         """, unsafe_allow_html=True)
 
                         metrik = metrics[metrics['segment_label'] == segment]
+                        
                         if not metrik.empty:
                             st.markdown(f"<b>Ortalama Limit:</b> {metrik['credit_limit'].values[0]:,.0f} ₺", unsafe_allow_html=True)
                             st.markdown(f"<b>Ortalama Borç:</b> {metrik['total_debt'].values[0]:,.0f} ₺", unsafe_allow_html=True)
-                            st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {metrik['amount'].values[0]:,.0f} ₺", unsafe_allow_html=True)
+                            
+                            # Apply override for 'Ortalama Yıllık Harcama'
+                            if segment in override_amounts:
+                                display_amount = override_amounts[segment]
+                            else:
+                                display_amount = metrik['amount'].values[0]
+
+                            # Custom formatting for Turkish locale (dot for thousands, comma for decimals)
+                            formatted_amount = f"{display_amount:,.2f}".replace(",", "TEMP_COMMA").replace(".", ",").replace("TEMP_COMMA", ".") + " ₺"
+                            st.markdown(f"<b>Ortalama Yıllık Harcama:</b> {formatted_amount}", unsafe_allow_html=True)
                         else:
                             st.info(f"{segment} için metrik bulunamadı.")
 
