@@ -56,7 +56,8 @@ def load_and_clean_merged_csv():
     # Drop rows where 'txn_date' is NaT if it's critical for analysis
     df.dropna(subset=['txn_date'], inplace=True)
 
-    df = df.drop(columns=['errors', 'merchant_id', 'user_id'], errors='ignore')
+    # IMPORTANT: Do not drop 'user_id' if it's needed for merging with prediction data
+    df = df.drop(columns=['errors', 'merchant_id'], errors='ignore')
     
     # --- 3. SEGMENTASYON (K-MEANS) ---
     # Ensure features exist before dropping NaNs and scaling
@@ -107,14 +108,40 @@ def load_and_clean_merged_csv():
     # Fill NaN segment labels for rows that might have been dropped from features due to NaNs
     df['segment_label'].fillna('Segmentasyon Yapılamadı (Eksik Veri)', inplace=True)
 
+    # --- Load and merge prediction data ---
+    prediction_df = load_prediction_data()
+    if not prediction_df.empty and 'user_id' in df.columns and 'user_id' in prediction_df.columns:
+        df = df.merge(prediction_df[['user_id', 'prediction_rf']], on='user_id', how='left', suffixes=('', '_pred'))
+        # Fill NaN prediction_rf values if some users don't have predictions
+        df['prediction_rf'].fillna(df['prediction_rf'].mean(), inplace=True) # Or a more appropriate fill value
+    else:
+        st.warning("Prediction data could not be loaded or merged. Prediction graphs may be empty.")
+        df['prediction_rf'] = pd.NA # Ensure column exists even if empty
+
     return df
+
+@st.cache_data
+def load_prediction_data():
+    prediction_url = "https://raw.githubusercontent.com/tturan6446/veri/main/prediction_output%20(3).csv"
+    try:
+        pred_df = pd.read_csv(prediction_url)
+        # Ensure 'user_id' is consistent (e.g., integer) and 'prediction_rf' is numeric
+        if 'user_id' in pred_df.columns:
+            pred_df['user_id'] = pd.to_numeric(pred_df['user_id'], errors='coerce').astype('Int64') # Use Int64 for nullable integer
+        if 'prediction_rf' in pred_df.columns:
+            pred_df['prediction_rf'] = pd.to_numeric(pred_df['prediction_rf'], errors='coerce')
+        pred_df.dropna(subset=['user_id', 'prediction_rf'], inplace=True) # Drop rows with missing key prediction values
+        return pred_df
+    except Exception as e:
+        st.error(f"Error loading prediction data: {e}")
+        return pd.DataFrame()
 
 # --- EDA Yardımcı Fonksiyonu ---
 def create_eda_dashboard_preview(df):
     df_sample = df.copy()
 
     # Ensure numerical columns are truly numeric before aggregation
-    for col in ['credit_limit', 'yearly_income', 'total_debt', 'amount']:
+    for col in ['credit_limit', 'yearly_income', 'total_debt', 'amount', 'prediction_rf']:
         if col in df_sample.columns:
             df_sample[col] = pd.to_numeric(df_sample[col], errors='coerce')
 
@@ -158,6 +185,10 @@ def generate_advanced_kpi_and_charts(df):
     card_spending = pd.DataFrame({'card_brand': [], 'amount': []})
     gender_limit = pd.DataFrame({'gender': [], 'credit_limit': []})
     mtd_change_pct = 0.0
+    
+    # New dataframes for prediction graphs
+    user_prediction_df = pd.DataFrame({'user_id': [], 'prediction_rf': []})
+    segment_prediction_df = pd.DataFrame({'segment_label': [], 'avg_prediction_rf': []})
 
     if 'txn_date' in df_copy.columns and not df_copy['txn_date'].empty:
         df_copy_valid_dates = df_copy.dropna(subset=['txn_date'])
@@ -183,14 +214,24 @@ def generate_advanced_kpi_and_charts(df):
     if 'gender' in df_copy.columns and 'credit_limit' in df_copy.columns:
         gender_limit = df_copy.groupby('gender')['credit_limit'].mean().reset_index()
 
+    # Data for new prediction graphs
+    if 'user_id' in df_copy.columns and 'prediction_rf' in df_copy.columns:
+        user_prediction_df = df_copy[['user_id', 'prediction_rf']].dropna().sort_values(by='user_id').reset_index(drop=True)
+    
+    if 'segment_label' in df_copy.columns and 'prediction_rf' in df_copy.columns:
+        segment_prediction_df = df_copy.groupby('segment_label')['prediction_rf'].mean().reset_index()
+        segment_prediction_df.columns = ['segment_label', 'avg_prediction_rf']
+
+
     return {
         "mtd_change_pct": round(mtd_change_pct, 2),
         "card_spending_df": card_spending,
-        "gender_limit_df": gender_limit
+        "gender_limit_df": gender_limit,
+        "user_prediction_df": user_prediction_df, # Add new prediction dataframes
+        "segment_prediction_df": segment_prediction_df
     }
 
 # --- CSS STİLLERİ ---
-# Removed login-box and login-title specific styles as they are no longer needed for the login screen.
 st.markdown("""
 <style>
 body {
@@ -242,9 +283,9 @@ else:
     with st.sidebar:
         selected = option_menu(
             menu_title="Menü",
-            # Removed "Dark Web Risk Paneli" from the options
-            options=["Ana Sayfa", "Müşteri Segmentasyonu", "Limit Tahminleme Aracı", "EDA Analizleri"],
-            icons=["house", "pie-chart", "activity", "bar-chart-line"], # Removed shield-exclamation icon
+            # Removed "Limit Tahminleme Aracı" and "Dark Web Risk Paneli" from the options
+            options=["Ana Sayfa", "Müşteri Segmentasyonu", "EDA Analizleri"],
+            icons=["house", "pie-chart", "bar-chart-line"], # Updated icons
             menu_icon="grid",
             default_index=0
         )
@@ -278,7 +319,7 @@ else:
             metrics = df.groupby('segment_label').agg({
                 'credit_limit': 'mean',
                 'total_debt': 'mean',
-                'amount': 'mean'
+                ''amount': 'mean'
             }).reset_index()
         else:
             st.warning("Segmentasyon verisi bulunamadı veya tüm değerler eksik. Lütfen veri yükleme ve segmentasyon adımlarını kontrol edin.")
@@ -346,9 +387,10 @@ else:
             st.info("Segment dağılımı grafiği için segmentasyon verisi eksik veya tüm değerler boş.")
 
 
-    elif selected == "Limit Tahminleme Aracı":
-        st.subheader("📈 Limit Tahminleme Aracı")
-        st.markdown("Model entegrasyonu yapılacak...")
+    # Removed "Limit Tahminleme Aracı" section
+    # elif selected == "Limit Tahminleme Aracı":
+    #     st.subheader("📈 Limit Tahminleme Aracı")
+    #     st.markdown("Model entegrasyonu yapılacak...")
 
     elif selected == "EDA Analizleri":
         st.subheader("📊 EDA (Power BI Dashboard Görünümü)")
@@ -405,7 +447,21 @@ else:
         else:
             st.info("Cinsiyete göre ortalama kredi limiti için veri bulunamadı.")
 
-    # Removed the "Dark Web Risk Paneli" section
-    # elif selected == "Dark Web Risk Paneli":
-    #     st.subheader("⚠️ Dark Web Risk Paneli")
-    #     st.markdown("Model entegrasyonu yapılacak...")
+        # --- New Prediction Graphs ---
+        st.markdown("### 📊 Tahmin Sonuçları Analizi")
+
+        st.markdown("#### Müşteri ID'ye Göre Tahmin Değerleri")
+        if not advanced['user_prediction_df'].empty:
+            fig_user_pred = px.line(advanced['user_prediction_df'], x="user_id", y="prediction_rf", 
+                                    title="Müşteri ID'ye Göre Tahmin Değerleri")
+            st.plotly_chart(fig_user_pred, use_container_width=True)
+        else:
+            st.info("Müşteri ID'ye göre tahmin değerleri için veri bulunamadı. Lütfen 'user_id' ve 'prediction_rf' sütunlarının mevcut olduğundan emin olun.")
+
+        st.markdown("#### Segmentlere Göre Ortalama Tahmin Değerleri")
+        if not advanced['segment_prediction_df'].empty:
+            fig_segment_pred = px.bar(advanced['segment_prediction_df'], x="segment_label", y="avg_prediction_rf", 
+                                      color="segment_label", title="Segmentlere Göre Ortalama Tahmin Değerleri")
+            st.plotly_chart(fig_segment_pred, use_container_width=True)
+        else:
+            st.info("Segmentlere göre ortalama tahmin değerleri için veri bulunamadı. Lütfen 'segment_label' ve 'prediction_rf' sütunlarının mevcut olduğundan emin olun.")
