@@ -319,7 +319,7 @@ else:
             metrics = df.groupby('segment_label').agg({
                 'credit_limit': 'mean',
                 'total_debt': 'mean',
-                ''amount': 'mean'
+                'amount': 'mean' # Corrected syntax error here: removed extra single quote
             }).reset_index()
         else:
             st.warning("Segmentasyon verisi bulunamadı veya tüm değerler eksik. Lütfen veri yükleme ve segmentasyon adımlarını kontrol edin.")
